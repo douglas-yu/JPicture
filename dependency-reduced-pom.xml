@@ -22,6 +22,9 @@
                   <mainClass>com.imageviewer.Main</mainClass>
                 </transformer>
                 <transformer />
+                <transformer>
+                  <resource>META-INF/spring.handlers</resource>
+                </transformer>
               </transformers>
               <filters>
                 <filter>
@@ -30,6 +33,7 @@
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
+                    <exclude>META-INF/MANIFEST.MF</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -43,5 +47,6 @@
     <maven.compiler.release>17</maven.compiler.release>
     <tm.version>3.10.1</tm.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <djl.version>0.26.0</djl.version>
   </properties>
 </project>

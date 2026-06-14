@@ -1,6 +1,7 @@
 package com.imageviewer.ui;
 
 import com.imageviewer.core.ImageLoader;
+import com.imageviewer.core.AutoTagger;
 import com.imageviewer.core.TagManager;
 
 import javax.swing.*;
@@ -259,6 +260,76 @@ public class ThumbnailBrowserPanel extends JPanel {
             }
         });
         menu.add(tagItem);
+
+        // ── Auto-tag menu items ────────────────────────────────────────────────
+        menu.addSeparator();
+
+        JMenuItem autoTagStat = new JMenuItem("Auto-tag  (Statistical, instant)");
+        autoTagStat.addActionListener(e -> {
+            List<File> targets = getSelectedFiles();
+            if (targets.isEmpty()) targets = java.util.List.of(cell.getFile());
+            final List<File> finalTargets = targets;
+            SwingWorker<java.util.Set<String>, Void> sw = new SwingWorker<>() {
+                @Override protected java.util.Set<String> doInBackground() {
+                    java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                    for (File f : finalTargets) all.addAll(AutoTagger.autoTag(f, false));
+                    return all;
+                }
+                @Override protected void done() {
+                    try {
+                        java.util.Set<String> detected = get();
+                        Window owner = SwingUtilities.getWindowAncestor(ThumbnailBrowserPanel.this);
+                        File ref = finalTargets.get(0);
+                        java.util.Set<String> chosen = AutoTagger.showPreviewDialog(owner, ref, detected);
+                        if (chosen != null && !chosen.isEmpty()) {
+                            TagManager tm = TagManager.getInstance();
+                            for (File f : finalTargets)
+                                for (String t : chosen) tm.addTag(f, t);
+                            cells.forEach(java.awt.Component::repaint);
+                        }
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                }
+            };
+            sw.execute();
+        });
+        menu.add(autoTagStat);
+
+        JMenuItem autoTagAI = new JMenuItem("Auto-tag  (AI object detection…)");
+        autoTagAI.addActionListener(e -> {
+            List<File> targets = getSelectedFiles();
+            if (targets.isEmpty()) targets = java.util.List.of(cell.getFile());
+            final List<File> finalTargets = targets;
+            if (!AutoTagger.isDJLAvailable()) {
+                int ok = JOptionPane.showConfirmDialog(
+                    SwingUtilities.getWindowAncestor(ThumbnailBrowserPanel.this),
+                    "<html><b>AI Auto-Tag</b> needs a one-time download (~250 MB, cached).<br>Continue?</html>",
+                    "AI Model Download", JOptionPane.YES_NO_OPTION);
+                if (ok != JOptionPane.YES_OPTION) return;
+            }
+            SwingWorker<java.util.Set<String>, Void> sw = new SwingWorker<>() {
+                @Override protected java.util.Set<String> doInBackground() {
+                    java.util.Set<String> all = new java.util.LinkedHashSet<>();
+                    for (File f : finalTargets) all.addAll(AutoTagger.autoTag(f, true));
+                    return all;
+                }
+                @Override protected void done() {
+                    try {
+                        java.util.Set<String> detected = get();
+                        Window owner = SwingUtilities.getWindowAncestor(ThumbnailBrowserPanel.this);
+                        File ref = finalTargets.get(0);
+                        java.util.Set<String> chosen = AutoTagger.showPreviewDialog(owner, ref, detected);
+                        if (chosen != null && !chosen.isEmpty()) {
+                            TagManager tm = TagManager.getInstance();
+                            for (File f : finalTargets)
+                                for (String t : chosen) tm.addTag(f, t);
+                            cells.forEach(java.awt.Component::repaint);
+                        }
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                }
+            };
+            sw.execute();
+        });
+        menu.add(autoTagAI);
 
         menu.show(cell, x, y);
     }

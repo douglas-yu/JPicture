@@ -13,8 +13,10 @@
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <tm.version>3.10.1</tm.version>
+        <djl.version>0.26.0</djl.version>
     </properties>
     <dependencies>
+        <!-- ── Image format support ────────────────────────────────── -->
         <dependency><groupId>com.twelvemonkeys.imageio</groupId><artifactId>imageio-jpeg</artifactId><version>${tm.version}</version></dependency>
         <dependency><groupId>com.twelvemonkeys.imageio</groupId><artifactId>imageio-tiff</artifactId><version>${tm.version}</version></dependency>
         <dependency><groupId>com.twelvemonkeys.imageio</groupId><artifactId>imageio-webp</artifactId><version>${tm.version}</version></dependency>
@@ -24,9 +26,31 @@
         <dependency><groupId>com.twelvemonkeys.imageio</groupId><artifactId>imageio-hdr</artifactId><version>${tm.version}</version></dependency>
         <dependency><groupId>com.twelvemonkeys.imageio</groupId><artifactId>imageio-pnm</artifactId><version>${tm.version}</version></dependency>
         <dependency><groupId>com.twelvemonkeys.imageio</groupId><artifactId>imageio-pcx</artifactId><version>${tm.version}</version></dependency>
+        <!-- ── Metadata / EXIF ──────────────────────────────────────── -->
         <dependency><groupId>com.drewnoakes</groupId><artifactId>metadata-extractor</artifactId><version>2.19.0</version></dependency>
+        <!-- ── JSON / Theme ────────────────────────────────────────── -->
         <dependency><groupId>com.google.code.gson</groupId><artifactId>gson</artifactId><version>2.10.1</version></dependency>
         <dependency><groupId>com.formdev</groupId><artifactId>flatlaf</artifactId><version>3.4</version></dependency>
+        <!-- ── DJL: Deep Java Library (AI auto-tagging) ────────────── -->
+        <!-- Core API – always present; lightweight (~1 MB) -->
+        <dependency>
+            <groupId>ai.djl</groupId>
+            <artifactId>api</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
+        <!-- PyTorch engine – downloads native libs on first AI use (~150 MB, cached) -->
+        <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-engine</artifactId>
+            <version>${djl.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Pre-trained model zoo (SSD object detector + ImageNet classifier) -->
+        <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-model-zoo</artifactId>
+            <version>${djl.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -44,6 +68,9 @@
                                     <mainClass>com.imageviewer.Main</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/spring.handlers</resource>
+                                </transformer>
                             </transformers>
                             <filters>
                                 <filter>
@@ -52,6 +79,7 @@
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
